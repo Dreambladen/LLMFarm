@@ -11,19 +11,20 @@ jobs:
           submodules: 'recursive'
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Configure Secure Network Paths
+      - name: Force Global Git Network Paths
         run: |
           git config --global url."https://github.com/".insteadOf "git@github.com:"
           echo -e "machine github.com\n login oauth2\n password ${{ secrets.GITHUB_TOKEN }}\n" > ~/.netrc
           echo -e "machine api.github.com\n login oauth2\n password ${{ secrets.GITHUB_TOKEN }}\n" >> ~/.netrc
 
-      - name: Pre-Fetch Swift Package Dependencies
+      - name: Raw CLI Package Resolution
         run: |
-          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -resolvePackageDependencies
+          mkdir -p .build/artifacts
+          swift package --scratch-path .build resolve
 
       - name: Compile Unsigned iPad Binary
         run: |
-          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" PROVISIONING_PROFILE_SPECIFIER="" COMPILER_INDEX_STORE_ENABLE=NO build
+          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" PROVISIONING_PROFILE_SPECIFIER="" COMPILER_INDEX_STORE_ENABLE=NO build ClangModules_CACHE_PATH=.build/artifacts
 
       - name: Structure and Pack IPA Payload
         run: |
