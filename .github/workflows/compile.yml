@@ -5,11 +5,20 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -resolvePackageDependencies
-          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" PROVISIONING_PROFILE_SPECIFIER="" clean build
-          mkdir Payload && cp -r build/Build/Products/Release-iphoneos/LLMFarm.app Payload/
+
+      - name: Force Core Dependencies
+        run: |
+          git submodule update --init --recursive
+          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -resolvePackageDependencies -scmProvider system
+
+      - name: Build Clean Application Binary
+        run: |
+          xcodebuild ARCHS=arm64 ONLY_ACTIVE_ARCH=NO -project LLMFarm.xcodeproj -scheme LLMFarm -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" PROVISIONING_PROFILE_SPECIFIER="" COMPILER_INDEX_STORE_ENABLE=NO build
+          
+          mkdir Payload
+          cp -r /Users/runner/Library/Developer/Xcode/DerivedData/*/Build/Products/Release-iphoneos/LLMFarm.app Payload/ || cp -r build/Build/Products/Release-iphoneos/LLMFarm.app Payload/
           zip -r LLMFarm_v1.4.3.ipa Payload
+
       - uses: actions/upload-artifact@v4
         with:
           name: iPad-Package
