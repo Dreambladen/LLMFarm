@@ -12,21 +12,30 @@ jobs:
           submodules: 'recursive'
           fetch-depth: 0
 
-      - name: Force Deep Init Submodules
+      - name: Hard Sync Submodule Directories
         run: |
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          git submodule deinit -f .
+          git submodule sync --recursive
           git submodule update --init --recursive --force
 
-      - name: Inject Pre-Compiled Frameworks
+      - name: Build C++ LLM Engine Binary From Source
         run: |
-          # Create the missing folders manually so Xcode stops throwing path errors
-          mkdir -p swift-markdown-ui/NetworkImage
-          mkdir -p llmfarm_core.swift/llama.cpp/build-apple/llama.xcframework
-          touch swift-markdown-ui/NetworkImage/Package.swift
-          touch llmfarm_core.swift/llama.cpp/build-apple/llama.xcframework/Info.plist
+          # Install compile utilities required by the developer's build matrix
+          brew install cmake go
+          
+          # Move directly into the underlying C++ source core folder
+          cd llmfarm_core.swift/llama.cpp
+          
+          # Manually execute the exact compilation architecture script provided by the creator
+          mkdir -p build-apple
+          cd build-apple
+          cmake -DCMAKE_TOOLCHAIN_FILE=../apple.toolchain.cmake -DPLATFORM=OS64 -G Xcode ..
+          xcodebuild -archivePath llama.xcarchive -scheme llama build
+          xcodebuild -create-xcframework -archive llama.xcarchive -framework llama.framework -output llama.xcframework
+          
+          # Sync back out to the workspace root directory
+          cd ../../..
 
-      - name: Compile Unsigned Application Binary
+      - name: Compile Unsigned iPad Application
         run: |
           xcodebuild -project LLMFarm.xcodeproj \
                      -scheme LLMFarm \
@@ -38,7 +47,6 @@ jobs:
                      CODE_SIGN_IDENTITY="" \
                      PROVISIONING_PROFILE_SPECIFIER="" \
                      COMPILER_INDEX_STORE_ENABLE=NO \
-                     ALLOW_MISSING_BINARY_ARTIFACTS=YES \
                      build
 
       - name: Structure and Pack IPA Payload
