@@ -11,11 +11,14 @@ jobs:
           submodules: 'recursive'
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Wipe Environment Artifacts
+      - name: Clean Project Configuration Files
         run: |
           rm -rf *.resolved
           rm -rf LLMFarm.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-          mkdir -p .build/packages
+
+      - name: Isolated Dependency Fetch
+        run: |
+          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -resolvePackageDependencies -scmProvider system
 
       - name: Compile Unsigned iPad Binary
         run: |
@@ -23,16 +26,11 @@ jobs:
                      -scheme LLMFarm \
                      -configuration Release \
                      -sdk iphoneos \
-                     -clonedSourcePackagesDirPath .build/packages \
-                     -usePackageRepositoryCache NO \
-                     -scmProvider system \
                      CODE_SIGNING_ALLOWED=NO \
                      CODE_SIGN_IDENTITY="" \
                      PROVISIONING_PROFILE_SPECIFIER="" \
                      COMPILER_INDEX_STORE_ENABLE=NO \
-                     VALIDATE_WORKSPACE=NO \
-                     SUPPRESS_EMBEDDED_APP_WIDGET_VALIDATION=YES \
-                     clean build
+                     build
 
       - name: Structure and Pack IPA Payload
         run: |
