@@ -17,14 +17,10 @@ jobs:
           echo -e "machine github.com\n login oauth2\n password ${{ secrets.GITHUB_TOKEN }}\n" > ~/.netrc
           echo -e "machine api.github.com\n login oauth2\n password ${{ secrets.GITHUB_TOKEN }}\n" >> ~/.netrc
 
-      - name: Raw CLI Package Resolution
-        run: |
-          mkdir -p .build/artifacts
-          swift package --scratch-path .build resolve
-
       - name: Compile Unsigned iPad Binary
         run: |
-          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" PROVISIONING_PROFILE_SPECIFIER="" COMPILER_INDEX_STORE_ENABLE=NO build ClangModules_CACHE_PATH=.build/artifacts
+          mkdir -p .build/packages
+          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" PROVISIONING_PROFILE_SPECIFIER="" COMPILER_INDEX_STORE_ENABLE=NO -clonedSourcePackagesDirPath .build/packages build
 
       - name: Structure and Pack IPA Payload
         run: |
