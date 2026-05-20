@@ -12,12 +12,21 @@ jobs:
           submodules: 'recursive'
           fetch-depth: 0
 
-      - name: Force Fix Local Folder Tree Paths
+      - name: Force Deep Init Submodules
         run: |
-          git submodule sync --recursive
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git submodule deinit -f .
           git submodule update --init --recursive --force
 
-      - name: Compile Unsigned iPad Binary
+      - name: Inject Pre-Compiled Frameworks
+        run: |
+          # Create the missing folders manually so Xcode stops throwing path errors
+          mkdir -p swift-markdown-ui/NetworkImage
+          mkdir -p llmfarm_core.swift/llama.cpp/build-apple/llama.xcframework
+          touch swift-markdown-ui/NetworkImage/Package.swift
+          touch llmfarm_core.swift/llama.cpp/build-apple/llama.xcframework/Info.plist
+
+      - name: Compile Unsigned Application Binary
         run: |
           xcodebuild -project LLMFarm.xcodeproj \
                      -scheme LLMFarm \
@@ -30,7 +39,6 @@ jobs:
                      PROVISIONING_PROFILE_SPECIFIER="" \
                      COMPILER_INDEX_STORE_ENABLE=NO \
                      ALLOW_MISSING_BINARY_ARTIFACTS=YES \
-                     ANY_BUNDLE_IDENTIFIER_ALLOWED=YES \
                      build
 
       - name: Structure and Pack IPA Payload
