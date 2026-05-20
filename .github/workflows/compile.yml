@@ -19,21 +19,18 @@ jobs:
 
       - name: Build C++ LLM Engine Binary From Source
         run: |
-          # Install compile utilities required by the developer's build matrix
           brew install cmake go
           
-          # Move directly into the underlying C++ source core folder
+          # Move directly into the native core directory
           cd llmfarm_core.swift/llama.cpp
           
-          # Manually execute the exact compilation architecture script provided by the creator
-          mkdir -p build-apple
+          # Run the engine compilation from the developer's source configuration directory
+          cmake -B build-apple -DCMAKE_TOOLCHAIN_FILE=../apple.toolchain.cmake -DPLATFORM=OS64 -G Xcode
           cd build-apple
-          cmake -DCMAKE_TOOLCHAIN_FILE=../apple.toolchain.cmake -DPLATFORM=OS64 -G Xcode ..
+          
+          # Generate the missing framework structures directly into the target project mapping folder
           xcodebuild -archivePath llama.xcarchive -scheme llama build
           xcodebuild -create-xcframework -archive llama.xcarchive -framework llama.framework -output llama.xcframework
-          
-          # Sync back out to the workspace root directory
-          cd ../../..
 
       - name: Compile Unsigned iPad Application
         run: |
