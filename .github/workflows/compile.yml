@@ -6,22 +6,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Force Core Dependencies
+      - name: Resolve Project Packages
         run: |
           git submodule update --init --recursive
-          xcodebuild -workspace LLMFarm.xcworkspace -scheme LLMFarm_App -resolvePackageDependencies || xcodebuild -workspace LLMFarm.xcworkspace -scheme LLMFarm -resolvePackageDependencies
+          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -resolvePackageDependencies
 
-      - name: Build Clean Application Binary
+      - name: Build App Payload
         run: |
-          SCHEME_NAME="LLMFarm"
-          if xcodebuild -workspace LLMFarm.xcworkspace -list | grep -q "LLMFarm_App"; then
-            SCHEME_NAME="LLMFarm_App"
-          fi
-          
-          xcodebuild -workspace LLMFarm.xcworkspace -scheme "$SCHEME_NAME" -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" PROVISIONING_PROFILE_SPECIFIER="" COMPILER_INDEX_STORE_ENABLE=NO clean build
+          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" PROVISIONING_PROFILE_SPECIFIER="" COMPILER_INDEX_STORE_ENABLE=NO clean build
           
           mkdir Payload
-          cp -r /Users/runner/Library/Developer/Xcode/DerivedData/*/Build/Products/Release-iphoneos/*.app Payload/
+          cp -r /Users/runner/Library/Developer/Xcode/DerivedData/*/Build/Products/Release-iphoneos/*.app Payload/ || cp -r build/Build/Products/Release-iphoneos/*.app Payload/
           zip -r LLMFarm_v1.4.3.ipa Payload
 
       - uses: actions/upload-artifact@v4
