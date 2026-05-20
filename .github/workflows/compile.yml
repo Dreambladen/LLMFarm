@@ -5,28 +5,26 @@ jobs:
   bundle:
     runs-on: macos-14
     steps:
-      - name: Checkout Source Code
+      - name: Checkout Code Architecture
         uses: actions/checkout@v4
         with:
-          submodules: 'recursive'
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Clean Project Configuration Files
+      - name: Force Hard Mirror Submodules
         run: |
-          rm -rf *.resolved
-          rm -rf LLMFarm.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git submodule init
+          git submodule update --init --recursive --force
 
-      - name: Isolated Dependency Fetch
-        run: |
-          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -resolvePackageDependencies -scmProvider system
-
-      - name: Compile Unsigned iPad Binary
+      - name: Compile Unsigned Application Binary
         run: |
           xcodebuild -project LLMFarm.xcodeproj \
                      -scheme LLMFarm \
                      -configuration Release \
                      -sdk iphoneos \
+                     -disableAutomaticPackageResolution \
                      CODE_SIGNING_ALLOWED=NO \
+                     CODE_SIGNING_REQUIRED=NO \
                      CODE_SIGN_IDENTITY="" \
                      PROVISIONING_PROFILE_SPECIFIER="" \
                      COMPILER_INDEX_STORE_ENABLE=NO \
