@@ -6,14 +6,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Resolve Project Packages
+      - name: Force Script Engine Build
         run: |
           git submodule update --init --recursive
-          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -resolvePackageDependencies
+          chmod +x ./build-xcframework_cpu.sh
+          ./build-xcframework_cpu.sh
 
-      - name: Build App Payload
+      - name: Build Clean IPA Package
         run: |
-          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" PROVISIONING_PROFILE_SPECIFIER="" COMPILER_INDEX_STORE_ENABLE=NO clean build
+          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" PROVISIONING_PROFILE_SPECIFIER="" COMPILER_INDEX_STORE_ENABLE=NO build
           
           mkdir Payload
           cp -r /Users/runner/Library/Developer/Xcode/DerivedData/*/Build/Products/Release-iphoneos/*.app Payload/ || cp -r build/Build/Products/Release-iphoneos/*.app Payload/
