@@ -9,13 +9,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          submodules: 'recursive'
-          fetch-depth: 0
 
-      - name: Sync Submodule Files
+      - name: Force Global Git Network Paths
         run: |
-          git submodule sync --recursive
-          git submodule update --init --recursive --force
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          echo -e "machine github.com\n login oauth2\n password ${{ secrets.GITHUB_TOKEN }}\n" > ~/.netrc
+          echo -e "machine api.github.com\n login oauth2\n password ${{ secrets.GITHUB_TOKEN }}\n" >> ~/.netrc
+
+      - name: Pre-Fetch Remote Dependencies
+        run: |
+          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -resolvePackageDependencies -scmProvider system
 
       - name: Compile Unsigned Application Binary
         run: |
@@ -23,12 +26,13 @@ jobs:
                      -scheme LLMFarm \
                      -configuration Release \
                      -sdk iphoneos \
-                     -skipPackagePluginValidation \
+                     -scmProvider system \
                      CODE_SIGNING_ALLOWED=NO \
                      CODE_SIGNING_REQUIRED=NO \
                      CODE_SIGN_IDENTITY="" \
                      PROVISIONING_PROFILE_SPECIFIER="" \
                      COMPILER_INDEX_STORE_ENABLE=NO \
+                     VALIDATE_WORKSPACE=NO \
                      build
 
       - name: Structure and Pack IPA Payload
