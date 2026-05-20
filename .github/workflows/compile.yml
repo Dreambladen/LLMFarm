@@ -17,18 +17,18 @@ jobs:
           git submodule sync --recursive
           git submodule update --init --recursive --force
 
-      - name: Build C++ LLM Engine Binary From Source
+      - name: Install Development Environment Tools
         run: |
           brew install cmake go
-          
-          # Move directly into the main library submodule root folder
+
+      - name: Initialize CMake Project Matrix
+        run: |
           cd llmfarm_core.swift
-          
-          # Execute compilation directly from the true folder containing the toolchain file
           cmake -B llama.cpp/build-apple -S llama.cpp -DCMAKE_TOOLCHAIN_FILE=apple.toolchain.cmake -DPLATFORM=OS64 -G Xcode
-          
-          # Compile and package the generated framework directly where Xcode expects it
-          cd llama.cpp/build-apple
+
+      - name: Build C++ LLM Engine Binary
+        run: |
+          cd llmfarm_core.swift/llama.cpp/build-apple
           xcodebuild -archivePath llama.xcarchive -scheme llama build
           xcodebuild -create-xcframework -archive llama.xcarchive -framework llama.framework -output llama.xcframework
 
