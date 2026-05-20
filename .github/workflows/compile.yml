@@ -21,14 +21,14 @@ jobs:
         run: |
           brew install cmake go
           
-          # Move directly into the native core directory
-          cd llmfarm_core.swift/llama.cpp
+          # Move directly into the main library submodule root folder
+          cd llmfarm_core.swift
           
-          # Run the engine compilation from the developer's source configuration directory
-          cmake -B build-apple -DCMAKE_TOOLCHAIN_FILE=../apple.toolchain.cmake -DPLATFORM=OS64 -G Xcode
-          cd build-apple
+          # Execute compilation directly from the true folder containing the toolchain file
+          cmake -B llama.cpp/build-apple -S llama.cpp -DCMAKE_TOOLCHAIN_FILE=apple.toolchain.cmake -DPLATFORM=OS64 -G Xcode
           
-          # Generate the missing framework structures directly into the target project mapping folder
+          # Compile and package the generated framework directly where Xcode expects it
+          cd llama.cpp/build-apple
           xcodebuild -archivePath llama.xcarchive -scheme llama build
           xcodebuild -create-xcframework -archive llama.xcarchive -framework llama.framework -output llama.xcframework
 
