@@ -1,28 +1,38 @@
 name: iPad Export
 on: [push, workflow_dispatch]
+
 jobs:
   bundle:
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
         with:
           submodules: 'recursive'
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Configure Secure Network Token
+      - name: Configure Secure Network Paths
         run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
           echo -e "machine github.com\n login oauth2\n password ${{ secrets.GITHUB_TOKEN }}\n" > ~/.netrc
           echo -e "machine api.github.com\n login oauth2\n password ${{ secrets.GITHUB_TOKEN }}\n" >> ~/.netrc
 
-      - name: Resolve and Build App Payload
+      - name: Pre-Fetch Swift Package Dependencies
         run: |
-          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -resolvePackageDependencies -packageAuthorizationProvider netrc
-          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" PROVISIONING_PROFILE_SPECIFIER="" COMPILER_INDEX_STORE_ENABLE=NO clean build
-          
-          mkdir Payload
+          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -resolvePackageDependencies
+
+      - name: Compile Unsigned iPad Binary
+        run: |
+          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" PROVISIONING_PROFILE_SPECIFIER="" COMPILER_INDEX_STORE_ENABLE=NO build
+
+      - name: Structure and Pack IPA Payload
+        run: |
+          mkdir -p Payload
           cp -r /Users/runner/Library/Developer/Xcode/DerivedData/*/Build/Products/Release-iphoneos/*.app Payload/ || cp -r build/Build/Products/Release-iphoneos/*.app Payload/
           zip -r LLMFarm_v1.4.3.ipa Payload
 
-      - uses: actions/upload-artifact@v4
+      - name: Export Ready Package
+        uses: actions/upload-artifact@v4
         with:
           name: iPad-Package
           path: LLMFarm_v1.4.3.ipa
