@@ -11,25 +11,21 @@ jobs:
           submodules: 'recursive'
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Force Global Git Network Paths
+      - name: Wipe Environment Artifacts
         run: |
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          echo -e "machine github.com\n login oauth2\n password ${{ secrets.GITHUB_TOKEN }}\n" > ~/.netrc
-          echo -e "machine api.github.com\n login oauth2\n password ${{ secrets.GITHUB_TOKEN }}\n" >> ~/.netrc
-
-      - name: Destroy Pinned Package Cache
-        run: |
-          rm -rf LLMFarm.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
           rm -rf *.resolved
+          rm -rf LLMFarm.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+          mkdir -p .build/packages
 
       - name: Compile Unsigned iPad Binary
         run: |
-          mkdir -p .build/packages
           xcodebuild -project LLMFarm.xcodeproj \
                      -scheme LLMFarm \
                      -configuration Release \
                      -sdk iphoneos \
                      -clonedSourcePackagesDirPath .build/packages \
+                     -usePackageRepositoryCache NO \
+                     -scmProvider system \
                      CODE_SIGNING_ALLOWED=NO \
                      CODE_SIGN_IDENTITY="" \
                      PROVISIONING_PROFILE_SPECIFIER="" \
