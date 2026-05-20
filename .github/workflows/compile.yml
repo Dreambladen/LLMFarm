@@ -2,19 +2,21 @@ name: iPad Export
 on: [push, workflow_dispatch]
 jobs:
   bundle:
-    runs-on: macos-latest
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
 
-      - name: Force Script Engine Build
+      - name: Configure Secure Network Token
         run: |
-          git submodule update --init --recursive
-          chmod +x ./build-xcframework_cpu.sh
-          ./build-xcframework_cpu.sh
+          echo -e "machine github.com\n login oauth2\n password ${{ secrets.GITHUB_TOKEN }}\n" > ~/.netrc
+          echo -e "machine api.github.com\n login oauth2\n password ${{ secrets.GITHUB_TOKEN }}\n" >> ~/.netrc
 
-      - name: Build Clean IPA Package
+      - name: Resolve and Build App Payload
         run: |
-          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" PROVISIONING_PROFILE_SPECIFIER="" COMPILER_INDEX_STORE_ENABLE=NO build
+          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -resolvePackageDependencies -packageAuthorizationProvider netrc
+          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" PROVISIONING_PROFILE_SPECIFIER="" COMPILER_INDEX_STORE_ENABLE=NO clean build
           
           mkdir Payload
           cp -r /Users/runner/Library/Developer/Xcode/DerivedData/*/Build/Products/Release-iphoneos/*.app Payload/ || cp -r build/Build/Products/Release-iphoneos/*.app Payload/
