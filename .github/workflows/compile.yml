@@ -3,7 +3,7 @@ on: [push, workflow_dispatch]
 
 jobs:
   bundle:
-    runs-on: macos-14
+    runs-runs-on: macos-14
     steps:
       - name: Checkout Code Architecture
         uses: actions/checkout@v4
@@ -12,10 +12,19 @@ jobs:
           submodules: 'recursive'
           fetch-depth: 0
 
-      - name: Fix Submodule Paths
+      - name: Rebuild and Direct Compile Engine Core
         run: |
           git submodule sync --recursive
           git submodule update --init --recursive --force
+          
+          # Move directly into the engine repo folder to generate the binary artifact layout
+          cd llmfarm_core.swift
+          chmod +x ./build-xcframework_cpu.sh
+          ./build-xcframework_cpu.sh
+          
+          # Verify file artifact existence back in main project path
+          cd ..
+          ls -la llmfarm_core.swift/llama.cpp/build-apple/
 
       - name: Compile Unsigned Application Binary
         run: |
@@ -29,7 +38,6 @@ jobs:
                      CODE_SIGN_IDENTITY="" \
                      PROVISIONING_PROFILE_SPECIFIER="" \
                      COMPILER_INDEX_STORE_ENABLE=NO \
-                     ALLOW_MISSING_BINARY_ARTIFACTS=YES \
                      build
 
       - name: Structure and Pack IPA Payload
