@@ -1,4 +1,4 @@
-name: Mobile Export
+name: iPad Export
 on: [workflow_dispatch]
 jobs:
   bundle:
