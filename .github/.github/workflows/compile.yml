@@ -1,5 +1,5 @@
 name: iPad Export
-on: [workflow_dispatch]
+on: [[push]
 jobs:
   bundle:
     runs-on: macos-latest
