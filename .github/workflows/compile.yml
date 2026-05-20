@@ -20,7 +20,18 @@ jobs:
       - name: Compile Unsigned iPad Binary
         run: |
           mkdir -p .build/packages
-          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" PROVISIONING_PROFILE_SPECIFIER="" COMPILER_INDEX_STORE_ENABLE=NO -clonedSourcePackagesDirPath .build/packages build
+          xcodebuild -project LLMFarm.xcodeproj \
+                     -scheme LLMFarm \
+                     -configuration Release \
+                     -sdk iphoneos \
+                     -clonedSourcePackagesDirPath .build/packages \
+                     CODE_SIGNING_ALLOWED=NO \
+                     CODE_SIGN_IDENTITY="" \
+                     PROVISIONING_PROFILE_SPECIFIER="" \
+                     COMPILER_INDEX_STORE_ENABLE=NO \
+                     VALIDATE_WORKSPACE=NO \
+                     SUPPRESS_EMBEDDED_APP_WIDGET_VALIDATION=YES \
+                     clean build
 
       - name: Structure and Pack IPA Payload
         run: |
