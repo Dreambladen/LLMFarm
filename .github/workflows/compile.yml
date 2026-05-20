@@ -17,6 +17,11 @@ jobs:
           echo -e "machine github.com\n login oauth2\n password ${{ secrets.GITHUB_TOKEN }}\n" > ~/.netrc
           echo -e "machine api.github.com\n login oauth2\n password ${{ secrets.GITHUB_TOKEN }}\n" >> ~/.netrc
 
+      - name: Destroy Pinned Package Cache
+        run: |
+          rm -rf LLMFarm.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+          rm -rf *.resolved
+
       - name: Compile Unsigned iPad Binary
         run: |
           mkdir -p .build/packages
