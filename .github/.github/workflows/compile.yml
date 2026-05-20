@@ -1,0 +1,15 @@
+name: Mobile Export
+on: [workflow_dispatch]
+jobs:
+  bundle:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          xcodebuild -project LLMFarm.xcodeproj -scheme LLMFarm -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" PROVISIONING_PROFILE_SPECIFIER="" clean build
+          mkdir Payload && cp -r build/Build/Products/Release-iphoneos/LLMFarm.app Payload/
+          zip -r LLMFarm_v1.4.3.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iPad-Package
+          path: LLMFarm_v1.4.3.ipa
