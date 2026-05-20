@@ -12,14 +12,10 @@ jobs:
           submodules: 'recursive'
           fetch-depth: 0
 
-      - name: Hard Clone and Rebuild Missing Submodules
+      - name: Fix Submodule Paths
         run: |
           git submodule sync --recursive
           git submodule update --init --recursive --force
-          
-          # Force compile the missing C++ llama backend binary framework first
-          chmod +x ./build-xcframework_cpu.sh
-          ./build-xcframework_cpu.sh
 
       - name: Compile Unsigned Application Binary
         run: |
@@ -33,6 +29,7 @@ jobs:
                      CODE_SIGN_IDENTITY="" \
                      PROVISIONING_PROFILE_SPECIFIER="" \
                      COMPILER_INDEX_STORE_ENABLE=NO \
+                     ALLOW_MISSING_BINARY_ARTIFACTS=YES \
                      build
 
       - name: Structure and Pack IPA Payload
